@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+            http://www.springframework.org/schema/context
+            http://www.springframework.org/schema/context/spring-context-3.1.xsd
+            http://www.springframework.org/schema/aop
+            http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+
+    <context:component-scan base-package="com.sohu.saccount"/>
+    <context:annotation-config/>
+
+    <bean id="thriftPerformanceConnectionPool" class="com.sohu.suc.thrift.pool.internal.ThriftConnectionPool"
+          lazy-init="true">
+        <property name="serverName" value="thriftPerformance"></property>
+        <property name="maxActive" value="200"/>
+        <property name="maxIdle" value="100"/>
+        <property name="testOnBorrow" value="true"/>
+        <property name="testOnReturn" value="true"/>
+        <property name="testWhileIdle" value="true"/>
+        <property name="conTimeOut" value="2000"/>
+    </bean>
+
+    <bean id="thriftPerformanceConnectionManager" class="com.sohu.suc.thrift.pool.ThriftConnectionManager"
+          lazy-init="true">
+        <property name="connectionPool" ref="thriftPerformanceConnectionPool"></property>
+    </bean>
+
+    <bean id="thriftClient" class="com.sohu.saccount.thrift.ThriftClient" lazy-init="true">
+        <property name="thriftConnectionManager" ref="thriftPerformanceConnectionManager"></property>
+    </bean>
+
+    <aop:config proxy-target-class="true">
+        <aop:pointcut id="thriftClientMethods"
+                      expression="execution(* com.sohu.saccount.thrift.ThriftClient.* (..))"/>
+        <aop:advisor advice-ref="thriftPerformanceConnectionManager" pointcut-ref="thriftClientMethods"/>
+    </aop:config>
+
+
+</beans>
